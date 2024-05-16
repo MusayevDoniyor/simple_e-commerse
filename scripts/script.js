@@ -1,20 +1,37 @@
-const container = document.querySelector(".container");
+// IIFE
+(async function () {
+  const hasToken = checkToken();
 
-init();
-
-async function init() {
-  checkToken();
+  if (!hasToken) redirectToLogin();
 
   const products = await fetchProducts(); // array
-  render(products);
-}
+
+  if (products.length) {
+    renderProducts(products);
+  }
+})();
 
 function checkToken() {
   const token = localStorage.getItem("token");
+  return Boolean(token);
+}
 
-  // no token
-  if (!token) {
-    window.location.href = "http://127.0.0.1:5500/login.html";
+function redirectToLogin() {
+  window.location.href = "http://127.0.0.1:5500/login.html";
+}
+
+async function fetchProducts() {
+  showSpinner();
+
+  try {
+    const response = await fetch("https://fakestoreapi.com/products");
+    const products = await response.json();
+
+    return products;
+  } catch (error) {
+    console.error(error);
+  } finally {
+    hideSpinner();
   }
 }
 
@@ -29,17 +46,10 @@ function hideSpinner() {
   spinner.remove();
 }
 
-async function fetchProducts() {
-  showSpinner();
+function renderProducts(products) {
+  const container = document.createElement("ul");
+  container.className = "container";
 
-  const response = await fetch("https://fakestoreapi.com/products");
-  const products = await response.json();
-
-  hideSpinner();
-  return products;
-}
-
-function render(products) {
   products.forEach(function (product) {
     // object
     const li = document.createElement("li");
@@ -60,13 +70,16 @@ function render(products) {
     price.textContent = product.price;
     li.append(price);
 
+    const starsContainer = document.createElement("div");
     const stars = "<span>⭐️</span>".repeat(Math.round(product.rating.rate));
-    li.insertAdjacentHTML("beforeend", stars);
+    starsContainer.insertAdjacentHTML("beforeend", stars);
+    li.append(starsContainer);
 
     const ratingCount = document.createElement("div");
     ratingCount.textContent = `(${product.rating.count})`;
     li.append(ratingCount);
 
     container.append(li);
+    document.body.append(container);
   });
 }
