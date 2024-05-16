@@ -4,6 +4,7 @@ const form = document.querySelector("form");
 const loginButton = document.querySelector("button[type='submit']");
 const resetButton = document.querySelector("button[type='reset']");
 
+
 let username, password;
 init();
 
