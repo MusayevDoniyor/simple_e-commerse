@@ -1,3 +1,5 @@
+const main = document.querySelector("main");
+
 // IIFE
 (async function () {
   const hasToken = checkToken();
@@ -53,6 +55,7 @@ function renderProducts(products) {
   products.forEach(function (product) {
     // object
     const li = document.createElement("li");
+    li.id = `productId-${product.id}`;
 
     const a = document.createElement("a");
     a.href = `http://127.0.0.1:5500/product.html?id=${product.id}`;
@@ -79,7 +82,24 @@ function renderProducts(products) {
     ratingCount.textContent = `(${product.rating.count})`;
     li.append(ratingCount);
 
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "Delete";
+    deleteBtn.onclick = function () {
+      deleteProduct(product.id);
+    };
+    li.append(deleteBtn);
+
     container.append(li);
-    document.body.append(container);
+    main.append(container);
   });
+}
+
+async function deleteProduct(id) {
+  const response = await fetch(`https://fakestoreapi.com/products/${id}`, {
+    method: "DELETE",
+  });
+
+  const data = await response.json();
+  const product = document.getElementById(`productId-${id}`);
+  product.remove();
 }

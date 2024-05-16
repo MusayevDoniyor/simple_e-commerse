@@ -3,17 +3,40 @@ const passwordInput = document.getElementsByName("password")[0];
 const form = document.querySelector("form");
 const loginButton = document.querySelector("button[type='submit']");
 const resetButton = document.querySelector("button[type='reset']");
+const visibilityBtn = document.querySelector("button.visibility-btn");
+const eyeContainer = document.querySelector("button.visibility-btn > span");
 
+let username, password
+let passwordShow = false;
 
-let username, password;
-init();
+(function () {
+  const hasToken = checkToken();
 
-function init() {
-  loginButton.disabled = true;
+  console.log(visibilityBtn, eyeContainer);
+  eyeContainer.textContent = "visibility_off";
+
+  visibilityBtn.onclick = function () {
+    passwordShow = passwordShow ? false : true;
+
+    if (passwordShow == true) {
+      passwordInput.type = "text";
+      eyeContainer.textContent = 'visibility';
+    } else {
+      passwordInput.type = "password";
+      eyeContainer.textContent = 'visibility_off';
+    }
+  };
+
+  if (hasToken) {
+    redirect();
+  }
+
   resetButton.onclick = resetInputValues;
 
-  // toggleButton();
-  redirect();
+  username = usernameInput.value;
+  password = passwordInput.value;
+
+  toggleButton();
 
   usernameInput.oninput = function (event) {
     username = event.target.value.trim();
@@ -27,12 +50,24 @@ function init() {
 
   form.onsubmit = async function (event) {
     event.preventDefault();
-    console.log(username.length);
 
     const result = await login();
     saveToken(result.token);
     redirect();
   };
+})();
+
+function checkToken() {
+  const token = localStorage.getItem("token");
+  return Boolean(token);
+}
+
+function redirect() {
+  const token = localStorage.getItem("token");
+
+  if (token) {
+    window.location.href = "http://127.0.0.1:5500/index.html";
+  }
 }
 
 function toggleButton() {
@@ -61,14 +96,6 @@ async function login() {
 
 function saveToken(token) {
   localStorage.setItem("token", token);
-}
-
-function redirect() {
-  const token = localStorage.getItem("token");
-
-  if (token) {
-    window.location.href = "http://127.0.0.1:5500/index.html";
-  }
 }
 
 function resetInputValues() {
