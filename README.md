@@ -21,7 +21,7 @@ Step 3:
 
 Step 4:
    1. CRUD
-   2. Password toggle
+   2. Password toggle 
    3. Login button spinner
    4. Toggle button not working in the start
    5. Separate sass _partials
