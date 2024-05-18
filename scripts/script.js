@@ -1,5 +1,7 @@
 const main = document.querySelector("main");
 
+let deleting = false;
+
 // IIFE
 (async function () {
   const hasToken = checkToken();
@@ -11,6 +13,8 @@ const main = document.querySelector("main");
   if (products.length) {
     renderProducts(products);
   }
+
+  renderCategories();
 })();
 
 function checkToken() {
@@ -84,10 +88,21 @@ function renderProducts(products) {
 
     const deleteBtn = document.createElement("button");
     deleteBtn.textContent = "Delete";
+    deleteBtn.id = "deleteBtn";
+
+    
     deleteBtn.onclick = function () {
       deleteProduct(product.id);
     };
     li.append(deleteBtn);
+
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "Edit";
+    editBtn.id = "editBtn";
+    editBtn.onclick = function() {
+      editProduct(product.id);
+    } 
+    li.append(editBtn);
 
     container.append(li);
     main.append(container);
@@ -95,11 +110,89 @@ function renderProducts(products) {
 }
 
 async function deleteProduct(id) {
-  const response = await fetch(`https://fakestoreapi.com/products/${id}`, {
-    method: "DELETE",
+  const deleteBtn = document.getElementById("deleteBtn");
+  try {
+    deleteBtn.innerHTML =
+      "<div style='margin: auto' class='spinner' disabled='true'></div>";
+
+    const response = await fetch(`https://fakestoreapi.com/products/${id}`, {
+      method: "DELETE",
+    });
+    const data = await response.json();
+
+    const product = document.getElementById(`productId-${id}`);
+    product.remove();
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function fetchCategories() {
+  const response = await fetch("https://fakestoreapi.com/products/categories");
+  const categories = await response.json();
+
+  return categories;
+}
+
+async function renderCategories() {
+  const select = document.createElement("select");
+  select.name = "categories";
+  select.style.marginBottom = "1rem";
+  select.onchange = function (event) {
+    handleSelect(event);
+  };
+
+  const categories = await fetchCategories(); // []
+
+  categories.forEach(function (category) {
+    const option = document.createElement("option");
+    option.text = category;
+    option.value = category;
+
+    select.append(option);
   });
 
-  const data = await response.json();
-  const product = document.getElementById(`productId-${id}`);
-  product.remove();
+  const option = document.createElement("option");
+  option.text = "All";
+  option.value = "all";
+  option.selected = true;
+  select.prepend(option);
+
+  main.prepend(select);
 }
+
+async function handleSelect(event) {
+  const categoryName = event.target.value;
+
+  try {
+    showSpinner();
+    const response = await fetch(
+      `https://fakestoreapi.com/products/category/${categoryName}`
+    );
+    const productsByCategory = await response.json();
+
+    document.querySelector('.container').remove()
+
+    renderProducts(productsByCategory);
+  } catch (error) {
+    console.error(error)
+  } finally {
+    hideSpinner();
+  }
+
+  async function editProduct(productId) {
+    try {
+      const response = await fetch(`https://fakestoreapi.com/products/${productId}`)
+      const result = await response.json();
+    } catch (error) {
+      
+    }
+  }
+
+  // Create POST
+  // Read GET
+  // Update PUT / PATCH
+  // Delete DELETE
+}
+
+
