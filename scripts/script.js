@@ -1,6 +1,8 @@
 const main = document.querySelector("main");
 
 let deleting = false;
+let editing = false;
+let allProducts = [];
 
 // IIFE
 (async function () {
@@ -8,10 +10,10 @@ let deleting = false;
 
   if (!hasToken) redirectToLogin();
 
-  const products = await fetchProducts(); // array
+  allProducts = await fetchProducts(); // array
 
-  if (products.length) {
-    renderProducts(products);
+  if (allProducts.length) {
+    renderProducts(allProducts);
   }
 
   renderCategories();
@@ -44,12 +46,13 @@ async function fetchProducts() {
 function showSpinner() {
   const div = document.createElement("div");
   div.className = "spinner";
+  div.style.margin = "auto";
   document.body.prepend(div);
 }
 
 function hideSpinner() {
   const spinner = document.querySelector(".spinner");
-  spinner.remove();
+  if (spinner) spinner.remove();
 }
 
 function renderProducts(products) {
@@ -57,7 +60,6 @@ function renderProducts(products) {
   container.className = "container";
 
   products.forEach(function (product) {
-    // object
     const li = document.createElement("li");
     li.id = `productId-${product.id}`;
 
@@ -74,7 +76,7 @@ function renderProducts(products) {
     li.append(a);
 
     const price = document.createElement("strong");
-    price.textContent = product.price;
+    price.textContent = `$${product.price.toFixed(2)}`;
     li.append(price);
 
     const starsContainer = document.createElement("div");
@@ -88,9 +90,8 @@ function renderProducts(products) {
 
     const deleteBtn = document.createElement("button");
     deleteBtn.textContent = "Delete";
-    deleteBtn.id = "deleteBtn";
+    deleteBtn.id = `deleteBtn-${product.id}`;
 
-    
     deleteBtn.onclick = function () {
       deleteProduct(product.id);
     };
@@ -98,23 +99,29 @@ function renderProducts(products) {
 
     const editBtn = document.createElement("button");
     editBtn.textContent = "Edit";
-    editBtn.id = "editBtn";
-    editBtn.onclick = function() {
+    editBtn.id = `editBtn-${product.id}`;
+    editBtn.onclick = function () {
       editProduct(product.id);
-    } 
+    };
     li.append(editBtn);
 
     container.append(li);
-    main.append(container);
   });
+
+  main.append(container);
 }
 
 async function deleteProduct(id) {
-  const deleteBtn = document.getElementById("deleteBtn");
-  try {
-    deleteBtn.innerHTML =
-      "<div style='margin: auto' class='spinner' disabled='true'></div>";
+  const deleteBtn = document.getElementById(`deleteBtn-${id}`);
+  deleteBtn.disabled = true;
 
+  const spinner = document.createElement("div");
+  spinner.style.margin = "auto";
+  spinner.className = "spinner";
+  deleteBtn.textContent = "";
+  deleteBtn.appendChild(spinner);
+
+  try {
     const response = await fetch(`https://fakestoreapi.com/products/${id}`, {
       method: "DELETE",
     });
@@ -124,6 +131,10 @@ async function deleteProduct(id) {
     product.remove();
   } catch (error) {
     console.error(error);
+  } finally {
+    deleteBtn.disabled = false;
+    deleteBtn.textContent = "Delete";
+    spinner.remove();
   }
 }
 
@@ -142,7 +153,7 @@ async function renderCategories() {
     handleSelect(event);
   };
 
-  const categories = await fetchCategories(); // []
+  const categories = await fetchCategories();
 
   categories.forEach(function (category) {
     const option = document.createElement("option");
@@ -166,33 +177,73 @@ async function handleSelect(event) {
 
   try {
     showSpinner();
-    const response = await fetch(
-      `https://fakestoreapi.com/products/category/${categoryName}`
-    );
-    const productsByCategory = await response.json();
 
-    document.querySelector('.container').remove()
+    let productsByCategory;
+    if (categoryName === "all") {
+      productsByCategory = allProducts;
+    } else {
+      const response = await fetch(
+        `https://fakestoreapi.com/products/category/${categoryName}`
+      );
+      productsByCategory = await response.json();
+    }
+
+    document.querySelector(".container").remove();
 
     renderProducts(productsByCategory);
   } catch (error) {
-    console.error(error)
+    console.error(error);
   } finally {
     hideSpinner();
   }
-
-  async function editProduct(productId) {
-    try {
-      const response = await fetch(`https://fakestoreapi.com/products/${productId}`)
-      const result = await response.json();
-    } catch (error) {
-      
-    }
-  }
-
-  // Create POST
-  // Read GET
-  // Update PUT / PATCH
-  // Delete DELETE
 }
 
+async function editProduct(productId) {
+  try {
+    editing = true;
+    showSpinner();
 
+    const response = await fetch(
+      `https://fakestoreapi.com/products/${productId}`
+    );
+    const product = await response.json();
+
+    const newTitle = prompt("Edit product title:", product.title);
+    const newPrice = prompt("Edit product price:", product.price);
+    const newImage = prompt("Edit product image URL:", product.image);
+
+    const updatedProduct = {
+      ...product,
+      title: newTitle || product.title,
+      price: parseFloat(newPrice) || product.price,
+      image: newImage || product.image,
+    };
+
+    // Productlar ko'rinishini o'zgartirish
+    const productElement = document.getElementById(`productId-${productId}`);
+    productElement.querySelector("p").textContent = updatedProduct.title;
+    productElement.querySelector(
+      "strong"
+    ).textContent = `$${updatedProduct.price.toFixed(2)}`;
+    productElement.querySelector("img").src = updatedProduct.image;
+
+    // O'zgarishlarni saqlash
+    await fetch(`https://fakestoreapi.com/products/${productId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(updatedProduct),
+    });
+  } catch (error) {
+    console.error(error);
+  } finally {
+    editing = false;
+    hideSpinner();
+  }
+}
+
+// Create POST
+// Read GET
+// Update PUT / PATCH
+// Delete DELETE
