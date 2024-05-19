@@ -6,7 +6,7 @@ const resetButton = document.querySelector("button[type='reset']");
 const visibilityBtn = document.querySelector("button.visibility-btn");
 const eyeContainer = document.querySelector("button.visibility-btn > span");
 
-let username, password
+let username, password;
 let passwordShow = false;
 
 (function () {
@@ -20,10 +20,10 @@ let passwordShow = false;
 
     if (passwordShow == true) {
       passwordInput.type = "text";
-      eyeContainer.textContent = 'visibility';
+      eyeContainer.textContent = "visibility";
     } else {
       passwordInput.type = "password";
-      eyeContainer.textContent = 'visibility_off';
+      eyeContainer.textContent = "visibility_off";
     }
   };
 
